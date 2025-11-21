@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N° de Empresas B (B-Corp)</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="logos-container">
+            <img src="thumbnail_Logo observa.png" alt="Universidad Austral de Chile - Centro de Estudios Regionales" class="header-logo-left">
+            <img src="thumbnail_images.png" alt="Logo Región" class="header-logo">
+        </div>
+        <div class="header-content">
+            <h1 class="main-title" id="main-title">N° de Empresas B (B-Corp)</h1>
+            <p class="subtitle" id="subtitle">Seguimiento del compromiso M1.1 hacia 2026</p>
+        </div>
+    </header>
+
+    <nav class="nav-container">
+        <div class="nav-links" id="nav-links">
+            <span class="nav-link active" data-section="empresas-b">Visor Empresas B</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section id="empresas-b" class="section active">
+            <h2 class="section-title">Distribución anual de Empresas B certificadas</h2>
+            <p class="chart-description">La visualización resume el peso anual de las Empresas B en Chile y la participación de la región de Los Ríos dentro del objetivo M1.1 hacia 2026.</p>
+            <div class="chart-section">
+                <div id="container" class="chart-panel"></div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p class="footer-text" id="footer-text">Centro de Estudios Regionales · Universidad Austral de Chile</p>
+        <img src="thumbnail_logo cer.png" alt="Universidad Austral de Chile - Centro de Estudios Regionales" class="footer-logo">
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
