@@ -21,8 +21,10 @@ let brightness;
 
 for (i = 0; i < dataLen; i += 1) {
     const totalYear = chartData.totalPais[i];
+    const losRiosCount = chartData.losRios[i];
+    const restoCount = Math.max(totalYear - losRiosCount, 0);
     const yearShare = totalGeneral ? (totalYear / totalGeneral) * 100 : 0;
-    const losRiosShare = totalYear ? (chartData.losRios[i] / totalYear) * 100 : 0;
+    const losRiosShare = totalYear ? (losRiosCount / totalYear) * 100 : 0;
     const restoShare = Math.max(100 - losRiosShare, 0);
 
     pieSource.push({
@@ -35,6 +37,11 @@ for (i = 0; i < dataLen; i += 1) {
                 Number(losRiosShare.toFixed(2)),
                 Number(restoShare.toFixed(2))
             ]
+        },
+        counts: [losRiosCount, restoCount],
+        custom: {
+            year: categories[i],
+            totalChile: totalYear
         }
     });
 }
@@ -43,7 +50,8 @@ for (i = 0; i < dataLen; i += 1) {
     browserData.push({
         name: categories[i],
         y: pieSource[i].y,
-        color: pieSource[i].color
+        color: pieSource[i].color,
+        custom: pieSource[i].custom
     });
 
     drillDataLen = pieSource[i].drilldown.data.length;
@@ -56,7 +64,11 @@ for (i = 0; i < dataLen; i += 1) {
             y: pieSource[i].drilldown.data[j],
             color: Highcharts.color(pieSource[i].color).brighten(brightness).get(),
             custom: {
-                version: name.split(' ')[1] || name.split(' ')[0]
+                version: name.split(' ')[1] || name.split(' ')[0],
+                year: pieSource[i].custom.year,
+                count: pieSource[i].counts[j],
+                totalChile: pieSource[i].custom.totalChile,
+                label: j === 0 ? 'Los Ríos' : 'Resto país'
             }
         });
     }
@@ -71,7 +83,20 @@ Highcharts.chart('container', {
             center: ['50%', '50%']
         }
     },
-    tooltip: { valueSuffix: '%' },
+    tooltip: {
+        formatter() {
+            if (this.series.name === 'Participación anual') {
+                const totalChile = this.point.custom?.totalChile || 0;
+                return `<b>Año ${this.point.name}</b><br/>Total Chile: <b>${totalChile} empresas B</b>`;
+            }
+
+            const percentage = Highcharts.numberFormat(this.y, 1);
+            const count = this.point.custom?.count || 0;
+            const yearLabel = this.point.custom?.year ? ` ${this.point.custom.year}` : '';
+            const label = this.point.custom?.label || this.point.name;
+            return `<b>${label}${yearLabel}</b><br/>Participación: <b>${percentage}% (${count} empresas)</b>`;
+        }
+    },
     series: [{
         name: 'Participación anual',
         data: browserData,
@@ -86,7 +111,7 @@ Highcharts.chart('container', {
         size: '80%',
         innerSize: '60%',
         dataLabels: {
-            format: '<b>{point.name}:</b> <span style="opacity: 0.5">{y}%</span>',
+            format: '<b>{point.name}:</b> {y}% ({point.custom.count} empresas)',
             filter: {
                 property: 'y',
                 operator: '>',
