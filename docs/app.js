@@ -76,7 +76,7 @@ for (i = 0; i < dataLen; i += 1) {
 
 Highcharts.chart('container', {
     chart: { type: 'pie' },
-    title: { text: 'Nº de Empresas B vinculadas al objetivo M1.1 hacia 2026' },
+    title: { text: null },
     plotOptions: {
         pie: {
             shadow: false,
@@ -122,6 +122,25 @@ Highcharts.chart('container', {
         id: 'versions'
     }],
     credits: { enabled: false },
+    exporting: {
+        enabled: true,
+        buttons: {
+            contextButton: {
+                menuItems: [
+                    'viewFullscreen',
+                    'printChart',
+                    'separator',
+                    'downloadPNG',
+                    'downloadJPEG',
+                    'downloadSVG',
+                    'separator',
+                    'downloadCSV',
+                    'downloadXLS',
+                    'viewData'
+                ]
+            }
+        }
+    },
     responsive: {
         rules: [{
             condition: { maxWidth: 400 },
