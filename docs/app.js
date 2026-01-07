@@ -2,124 +2,98 @@ const chartData = {
     years: ['2022', '2023', '2024'],
     totalPais: [223, 259, 271],
     losRios: [3, 4, 5],
-    porcentajePais: [1.4, 1.5, 1.9],
-    incremento: [0, 1, 1]
+    porcentajePais: [1.4, 1.5, 1.9]
 };
 
-const colors = Highcharts.getOptions().colors;
-const categories = chartData.years;
-const totalGeneral = chartData.totalPais.reduce((acc, value) => acc + value, 0);
-const pieSource = [];
-const browserData = [];
-const versionsData = [];
-const dataLen = categories.length;
-
-let i;
-let j;
-let drillDataLen;
-let brightness;
-
-for (i = 0; i < dataLen; i += 1) {
-    const totalYear = chartData.totalPais[i];
-    const losRiosCount = chartData.losRios[i];
-    const restoCount = Math.max(totalYear - losRiosCount, 0);
-    const yearShare = totalGeneral ? (totalYear / totalGeneral) * 100 : 0;
-    const losRiosShare = totalYear ? (losRiosCount / totalYear) * 100 : 0;
-    const restoShare = Math.max(100 - losRiosShare, 0);
-
-    pieSource.push({
-        y: Number(yearShare.toFixed(2)),
-        color: colors[i % colors.length],
-        drilldown: {
-            name: `Distribución ${categories[i]}`,
-            categories: [`Los Ríos ${categories[i]}`, `Resto país ${categories[i]}`],
-            data: [
-                Number(losRiosShare.toFixed(2)),
-                Number(restoShare.toFixed(2))
-            ]
-        },
-        counts: [losRiosCount, restoCount],
-        custom: {
-            year: categories[i],
-            totalChile: totalYear
-        }
-    });
-}
-
-for (i = 0; i < dataLen; i += 1) {
-    browserData.push({
-        name: categories[i],
-        y: pieSource[i].y,
-        color: pieSource[i].color,
-        custom: pieSource[i].custom
-    });
-
-    drillDataLen = pieSource[i].drilldown.data.length;
-
-    for (j = 0; j < drillDataLen; j += 1) {
-        const name = pieSource[i].drilldown.categories[j];
-        brightness = 0.2 - (j / drillDataLen) / 5;
-        versionsData.push({
-            name,
-            y: pieSource[i].drilldown.data[j],
-            color: Highcharts.color(pieSource[i].color).brighten(brightness).get(),
-            custom: {
-                version: name.split(' ')[1] || name.split(' ')[0],
-                year: pieSource[i].custom.year,
-                count: pieSource[i].counts[j],
-                totalChile: pieSource[i].custom.totalChile,
-                label: j === 0 ? 'Los Ríos' : 'Resto país'
-            }
-        });
-    }
-}
-
+// Serie temporal: solo un eje Y (conteo). El porcentaje se muestra como etiqueta sobre Los Rios.
 Highcharts.chart('container', {
-    chart: { type: 'pie' },
-    title: { text: null },
-    plotOptions: {
-        pie: {
-            shadow: false,
-            center: ['50%', '50%']
-        }
+    chart: {
+        type: 'spline',
+        backgroundColor: '#ffffff',
+        spacing: [16, 16, 16, 16]
+    },
+    title: {
+        text: 'Evolucion anual de Empresas B (Chile y Los Rios)',
+        style: { fontSize: '16px' }
+    },
+    subtitle: {
+        text: 'El porcentaje de participacion de Los Rios aparece junto a cada punto naranja',
+        style: { color: '#4a4a4a' }
+    },
+    xAxis: {
+        categories: chartData.years,
+        tickmarkPlacement: 'on',
+        title: { text: 'Año' },
+        crosshair: true
+    },
+    yAxis: {
+        title: { text: 'Nº de Empresas B (Chile y Los Ríos)' },
+        min: 0,
+        allowDecimals: false,
+        gridLineColor: '#e8e8e8'
     },
     tooltip: {
+        shared: true,
+        borderColor: '#1B4F72',
         formatter() {
-            if (this.series.name === 'Participación anual') {
-                const totalChile = this.point.custom?.totalChile || 0;
-                return `<b>Año ${this.point.name}</b><br/>Total Chile: <b>${totalChile} empresas B</b>`;
-            }
-
-            const percentage = Highcharts.numberFormat(this.y, 1);
-            const count = this.point.custom?.count || 0;
-            const yearLabel = this.point.custom?.year ? ` ${this.point.custom.year}` : '';
-            const label = this.point.custom?.label || this.point.name;
-            return `<b>${label}${yearLabel}</b><br/>Participación: <b>${percentage}% (${count} empresas)</b>`;
+            const year = this.x;
+            const idx = this.points?.[0]?.point?.index ?? 0;
+            const participacion = chartData.porcentajePais[idx] || 0;
+            const filas = (this.points || []).map(p => {
+                const valor = Highcharts.numberFormat(p.y, 0);
+                return `<span style="color:${p.color}">●</span> ${p.series.name}: <b>${valor} empresas</b>`;
+            }).join('<br/>');
+            const lineaPct = `<span style="color:#16a085">●</span> Participación Los Ríos: <b>${Highcharts.numberFormat(participacion, 1)} %</b>`;
+            return `<b>Año ${year}</b><br/>${filas}<br/>${lineaPct}`;
+        }
+    },
+    plotOptions: {
+        series: {
+            marker: {
+                enabled: true,
+                radius: 5,
+                symbol: 'circle'
+            },
+            lineWidth: 3,
+            states: { hover: { lineWidthPlus: 1 } }
+        },
+        areaspline: {
+            fillOpacity: 0.08,
+            lineWidth: 3
         }
     },
     series: [{
-        name: 'Participación anual',
-        data: browserData,
-        size: '45%',
-        dataLabels: {
-            color: '#ffffff',
-            distance: '-50%'
-        }
+        name: 'Total Chile',
+        type: 'areaspline',
+        data: chartData.totalPais,
+        color: '#1B4F72',
+        zIndex: 3
     }, {
-        name: 'Detalle anual',
-        data: versionsData,
-        size: '80%',
-        innerSize: '60%',
+        name: 'Los Ríos (empresas)',
+        type: 'spline',
+        data: chartData.losRios,
+        color: '#d35400',
+        zIndex: 4,
         dataLabels: {
-            format: '<b>{point.name}:</b> {y}% ({point.custom.count} empresas)',
-            filter: {
-                property: 'y',
-                operator: '>',
-                value: 1
+            enabled: true,
+            formatter() {
+                const idx = this.point.index;
+                const pct = chartData.porcentajePais[idx] || 0;
+                return `${Highcharts.numberFormat(pct, 1)}%`;
             },
-            style: { fontWeight: 'normal' }
-        },
-        id: 'versions'
+            color: '#0f5132',
+            backgroundColor: '#ffffff',
+            borderColor: '#0f5132',
+            borderRadius: 6,
+            borderWidth: 1,
+            padding: 4,
+            style: {
+                fontSize: '11px',
+                fontWeight: 'bold'
+            },
+            y: -18,
+            shadow: true
+        }
     }],
     credits: { enabled: false },
     exporting: {
@@ -141,22 +115,17 @@ Highcharts.chart('container', {
             }
         }
     },
+    legend: {
+        itemStyle: { fontWeight: 'normal' },
+        align: 'center',
+        verticalAlign: 'bottom'
+    },
     responsive: {
         rules: [{
-            condition: { maxWidth: 400 },
+            condition: { maxWidth: 640 },
             chartOptions: {
-                series: [{}, {
-                    id: 'versions',
-                    dataLabels: {
-                        distance: 10,
-                        format: '{point.custom.version}',
-                        filter: {
-                            property: 'percentage',
-                            operator: '>',
-                            value: 2
-                        }
-                    }
-                }]
+                legend: { layout: 'vertical', align: 'center', verticalAlign: 'top' },
+                plotOptions: { series: { marker: { radius: 4 } } }
             }
         }]
     }
